@@ -1,0 +1,16 @@
+#первый шаг
+#берем все первые риды из файла 8.sacce 
+for i in $(ls /home/martes/project_Saccharomyces_cerv/8.sacce/*_1.fastq); do echo $i; done                         
+
+#Второй шаг 
+#берем только названия первых ридов 
+for i in $(ls /home/martes/project_Saccharomyces_cerv/8.sacce/*_1.fastq); do j=$(echo $i | cut -d "/" -f6 | cut -d "_" -f1); echo $j; done        
+
+
+#третий шаг
+#то же самое делаем для пары ридов = полчаем их названия и отправляем на stdin bwa
+for i in $(ls /home/martes/project_Saccharomyces_cerv/8.sacce/*_1.fastq); do sample=$(echo $i | cut -d "/" -f6 | cut -d "_" -f1); bwa mem -R $(echo "@RG\tID:${sample}\tSM:${sample}\tLB:${sample}\tPL:ILLUMINA") -t 8 /home/martes/project_Saccharomyces_cerv/8.sacce/sacce.fasta /home/martes/project_Saccharomyces_cerv/8.sacce/8.sacce/${sample}_1.fastq /home/martes/project_Saccharomyces_cerv/8.sacce/8.sacce/${sample}_2.fastq | samtools view -bS -f 0x4 | samtools sort -@ 5 -o${sample}.bam; samtools index ${sample}.bam; done
+
+
+#Четвертый шаг по снипколингу 
+freebayes -f /home/martes/project_Saccharomyces_cerv/8.sacce/sacce.fasta -f 0.5 -C 5 --pooled-continuous --min-alternate-fraction 0.5 *.bam > group_calling.vcf
